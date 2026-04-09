@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "docker": {
+      "command": "docker",
+      "args": ["mcp", "gateway", "run"]
+    },
+    "chrome-devtools": {
+      "type": "command",
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@latest", "--browser-url=http://127.0.0.1:9222"],
+      "env": {
+        "CHROME_URL": "http://127.0.0.1:9222"
+      }
+    },
+    "playwright": {
+      "type": "command",
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"]
+    }
+  }
+}

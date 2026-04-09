@@ -1,0 +1,155 @@
+---
+description: When the user asks to scrape, extract, or fetch structured data from websites, APIs, or feeds
+alwaysApply: false
+---
+
+# Web Scraping Skill
+
+You have a CLI scraping toolkit at `~/tools/webscrape/scrape.py`. Run it with `uv run ~/tools/webscrape/scrape.py <command> [args]`.
+
+## Decision Tree: Choosing the Right Approach
+
+1. **Quick page read / article content** → Use the built-in `WebFetch` tool directly. It returns markdown.
+2. **Structured HTML extraction** (tables, repeated elements, specific selectors) → Use `scrape.py`.
+3. **JSON/REST API** → Use `scrape.py api` for pagination support, or `curl` for one-shot requests.
+4. **RSS/Atom feeds** → Use `scrape.py feed`.
+5. **JavaScript-rendered / SPA content** → Use browser tools (playwright or chrome-devtools) to render the page, then either:
+   - Parse the snapshot text directly, OR
+   - Save the rendered HTML to a file, then run `scrape.py` against the local file path.
+
+## scrape.py Command Reference
+
+### `tables <URL|FILE>` — Extract HTML tables
+```
+uv run ~/tools/webscrape/scrape.py tables "https://example.com/data" --format json
+uv run ~/tools/webscrape/scrape.py tables "https://example.com/data" --index 0 --format csv
+```
+- `--index N` picks a specific table (0-indexed)
+- `--format json|csv|jsonl`
+
+### `css <URL|FILE> <SELECTOR>` — Extract by CSS selector
+```
+uv run ~/tools/webscrape/scrape.py css "https://example.com" "h2.title" --text
+uv run ~/tools/webscrape/scrape.py css "https://example.com" "a.nav-link" --attr href --absolute
+```
+- `--text` returns text content only
+- `--html` returns inner HTML
+- `--attr NAME` extracts a specific attribute
+- `--absolute` converts relative URLs to absolute
+
+### `links <URL|FILE>` — Extract all links
+```
+uv run ~/tools/webscrape/scrape.py links "https://example.com" --pattern "\.pdf$" --absolute
+```
+- `--pattern REGEX` filters by href
+- `--absolute` makes URLs absolute
+
+### `meta <URL|FILE>` — Extract structured metadata
+```
+uv run ~/tools/webscrape/scrape.py meta "https://example.com/article"
+```
+Returns JSON-LD, OpenGraph, Twitter Card, and standard meta tags.
+
+### `api <URL>` — Fetch JSON APIs with pagination
+```
+uv run ~/tools/webscrape/scrape.py api "https://api.example.com/items" --paginate next --max-pages 5
+uv run ~/tools/webscrape/scrape.py api "https://api.example.com/items?limit=100" --paginate offset --page-param offset
+uv run ~/tools/webscrape/scrape.py api "https://api.example.com/items" --headers "Authorization=Bearer TOKEN"
+```
+- `--paginate next|offset|page` sets pagination strategy
+- `--next-key KEY` JSON key for next URL (default: "next")
+- `--results-key KEY` JSON key containing the results array
+- `--page-param NAME` query param name for offset/page
+- `--max-pages N` limit pages fetched (default: 10)
+- `--delay SECONDS` pause between requests (default: 1.0)
+- `--headers Key=Value` extra headers (repeatable)
+
+### `feed <URL>` — Parse RSS/Atom feeds
+```
+uv run ~/tools/webscrape/scrape.py feed "https://example.com/rss.xml"
+```
+
+### `list <URL|FILE> <SELECTOR>` — Extract repeated elements with sub-selectors
+```
+uv run ~/tools/webscrape/scrape.py list "https://example.com/products" ".product-card" \
+  --fields "name=h3,price=.price,url=a@href,img=img@src"
+```
+- `--fields` spec: comma-separated `fieldname=selector` pairs
+- Append `@attrname` to extract an attribute instead of text (e.g., `a@href`, `img@src`)
+
+### Common options (all commands)
+- `--output FILE` or `-o FILE` writes to a file instead of stdout
+- `--timeout N` request timeout in seconds (default: 30)
+- `--format json|csv|jsonl` output format (default: json)
+- Accepts a local file path instead of URL (useful for browser-rendered pages saved to disk)
+
+## Patterns for JS-Rendered Pages
+
+When a site requires JavaScript rendering:
+
+```
+# 1. Use browser tools to navigate and wait for content
+# 2. Save the rendered HTML
+playwright-browser_evaluate: () => document.documentElement.outerHTML
+# 3. Write the HTML to a temp file
+# 4. Run scrape.py against the local file
+uv run ~/tools/webscrape/scrape.py tables /tmp/rendered.html
+```
+
+Or parse the browser snapshot directly if the data is simple enough.
+
+## Authenticated / Login-Gated Sites
+
+When a site requires authentication, follow this workflow. NEVER attempt to access credentials, cookies, or tokens from the user's system.
+
+### Option A: Browser login (recommended for most sites)
+
+1. Navigate to the site's login page using browser tools.
+2. **Ask the user to log in manually** — do NOT type credentials on their behalf.
+3. Wait for the user to confirm they are logged in.
+4. Navigate to the target page within the authenticated browser session.
+5. Extract data directly via JavaScript evaluation, or save the rendered HTML to a file and parse it with `scrape.py`:
+
+```
+# Extract HTML from the authenticated session
+# (use playwright-browser_evaluate or chrome-devtools-evaluate_script)
+() => document.documentElement.outerHTML
+
+# Write the result to a temp file, then parse
+uv run ~/tools/webscrape/scrape.py tables /tmp/authenticated_page.html
+```
+
+### Option B: API with auth headers
+
+If the site uses token-based auth (Bearer tokens, API keys), the **user provides the token** and you pass it via headers:
+
+```
+uv run ~/tools/webscrape/scrape.py api "https://api.example.com/data" \
+  --headers "Authorization=Bearer USER_PROVIDED_TOKEN"
+```
+
+### Option C: Exported cookies with curl
+
+If the user exports cookies from their browser (e.g., via a browser extension), use curl with the cookie file:
+
+```
+curl -b cookies.txt "https://example.com/protected-page" -o /tmp/page.html
+uv run ~/tools/webscrape/scrape.py tables /tmp/page.html
+```
+
+### Hard rules for authenticated scraping
+
+- **NEVER** handle, store, or ask for the user's passwords.
+- **NEVER** attempt to extract cookies, tokens, or credentials from the user's browser, keychain, or credential stores.
+- **NEVER** automate login form submission with credentials — always let the user authenticate manually.
+- If you need a token or API key, ask the user to provide it explicitly. Do not go looking for it.
+- If authentication is failing, suggest the user check their login in a browser and try again, or ask in **#cursor** on Slack for help.
+
+## Best Practices
+
+- **Rate limiting**: Use `--delay` for multi-page API requests. When scraping multiple pages in a loop, add `sleep` between requests.
+- **Start small**: Test with a single page/request first, inspect the output, then scale up.
+- **Inspect first**: Use `WebFetch` or `scrape.py meta` to understand a page's structure before writing complex selectors.
+- **Prefer APIs**: If a site has a public API or JSON-LD data, use that instead of parsing HTML.
+- **Save intermediate output**: Use `-o filename.json` to save results for further processing.
+- **Local file fallback**: If a URL is blocked or requires auth, ask the user to save the page HTML and use the local file path.
