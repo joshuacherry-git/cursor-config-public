@@ -2,7 +2,7 @@
 name: sync-config
 description: >-
   Commit and push changes to the cursor-config repo (skills, agents, rules,
-  MCP config, editor settings, thoughts) and sync the public repo. Use when
+  MCP config, editor settings, thoughts, specs) and sync the public repo. Use when
   the user says "sync config", "push config", "save config", "commit skills",
   "commit agents", or asks to push Cursor configuration changes to GitHub.
 ---
@@ -23,6 +23,7 @@ Stage, commit, and push all pending changes in `~/code/cursor-config/`, then syn
    - `mcp.json` — MCP server config changes
    - `editor/` — settings or keybinding changes
    - `thoughts/` — journal entries (daily, decisions, ideas, TILs, etc.)
+   - `specs/` — spec packages (`spec.md`, `_refinement/`, etc.)
    - `extensions.txt` — extension list changes
    - `public/` — public repo overlay files
    - Root files — install.sh, README.md, .gitignore, sync-public.sh
