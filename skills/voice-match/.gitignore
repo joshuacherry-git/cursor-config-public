@@ -1,0 +1,28 @@
+# Local-only corpus content (raw data + intermediate artifacts).
+# Only MANIFEST.md is committed.
+corpus/*
+!corpus/MANIFEST.md
+
+# Identity file holds personal references (Slack user_id, full name, email);
+# committed template lives in identity.example.yml.
+identity.yml
+
+# Subagent-authored helper scripts from the harvest passes. Kept on disk for
+# reference but not committed — only the canonical extractors/processors are
+# part of the skill (extract_cursor_turns.py, corpus_stats.py, split_holdout.py).
+scripts/__pycache__/
+scripts/append_slack_search_page.py
+scripts/build_docs_corpus_from_glean.py
+scripts/build_email_sent_corpus.py
+scripts/collect_slack_mcp_agent_tools.py
+scripts/collect_slack_pages_from_agent_tools.py
+scripts/consolidate_uid_slack_agent_tools.py
+scripts/extract_drive_doc_candidates.py
+scripts/ingest_recent_slack_mcp.py
+scripts/process_slack_search_harvest.py
+scripts/slack_pages_next_cursor.py
+scripts/stage_slack_mcp_blob.py
+
+# Working files
+*.tmp
+.DS_Store

@@ -1,0 +1,16 @@
+---
+description: Prefer readable math in Cursor chat (LaTeX often does not render)
+alwaysApply: true
+---
+
+# Chat-friendly mathematical notation
+
+Cursor chat does not reliably render LaTeX/KaTeX. When explaining mathematics, statistics, or formulas **in assistant replies intended for the chat panel**:
+
+1. **Prefer plain text and Unicode** for formulas: use symbols like ∑ ∏ ∫ √ ≤ ≥ ≠ ∈ ⊂ ∧ ∨ ¬ → ⇔ ∞ ∂ α β γ ε λ μ σ ω and superscripts/subscripts only when short (e.g. x², εᵣ).
+2. **Avoid** raw `$...$`, `$$...$$`, `\(...\)`, `\begin{align}`, and heavy LaTeX blocks unless the user explicitly asks for LaTeX (e.g. for copy-paste into a paper or `.md` preview).
+3. **Add a one-line verbal gloss** for dense expressions (e.g. “expected value of X given Y”).
+4. **Break multi-step derivations** into numbered lines with words between steps so chat stays scannable.
+5. If full LaTeX is useful as **copy-paste**, put it in a single fenced code block labeled as LaTeX and still give a Unicode/plain summary above it.
+
+Default assumption: readability **in chat** beats mathematical typography fidelity.

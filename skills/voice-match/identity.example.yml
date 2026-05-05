@@ -1,0 +1,34 @@
+# Identity references used by all harvesters.
+# Copy this file to identity.yml and fill in real values before running bootstrap.
+# identity.yml is gitignored.
+
+slack:
+  # From the slack_search_public_and_private MCP tool description (current user).
+  # Auto-discoverable at runtime via slack_read_user_profile (no args).
+  user_id: U00000000
+  # Human-readable handle. Confirmed via slack_read_user_profile.
+  handle: firstname.lastname
+
+google:
+  # Full name as it appears in Google Workspace (used by Glean owner: filter
+  # and meeting_lookup participants filter). Not programmatically fetchable.
+  full_name: Firstname Lastname
+  # Display name often used in meeting transcripts and as a casual label.
+  display_name: First Last
+  # Primary work email. Implicit via gmail_search from:me, but stated explicitly
+  # for the meeting_lookup peer filter and any tool that needs the literal email.
+  primary_email: firstname.lastname@example.com
+  # Any aliases that have authored content over the lookback window.
+  email_aliases: []
+
+# Optional explicit inclusion lists. Leave empty to rely on stratified discovery.
+seeds:
+  # Slack channel names you definitely want represented (e.g. "eng-platform").
+  core_channels: []
+  # Recurring meeting titles or types you want represented (e.g. "1:1 with manager").
+  core_meeting_types: []
+  # Doc URLs to force-include (e.g. signature long-form docs).
+  signature_doc_urls: []
+
+# Lookback window in months. Bootstrap default; refresh uses a smaller delta.
+lookback_months: 24
